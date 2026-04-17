@@ -1,0 +1,21 @@
+services:
+  jira-mcp:
+    build:
+      context: .
+      args:
+        MCP_SERVICE: jira
+    env_file:
+      - .env
+    ports:
+      - '8091:8090'
+
+  confluence-mcp:
+    build:
+      context: .
+      args:
+        MCP_SERVICE: confluence
+    env_file:
+      - .env
+    ports:
+      - '8092:8090'
+

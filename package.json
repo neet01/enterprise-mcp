@@ -1,0 +1,23 @@
+{
+  "name": "enterprise-mcp-services",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Standalone MCP services for enterprise LibreChat integrations",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev:jira": "node --env-file=.env src/jira/server.js",
+    "dev:confluence": "node --env-file=.env src/confluence/server.js",
+    "test": "node --test",
+    "docker:build:jira": "docker build --build-arg MCP_SERVICE=jira -t enterprise-mcp-jira .",
+    "docker:build:confluence": "docker build --build-arg MCP_SERVICE=confluence -t enterprise-mcp-confluence ."
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-agent-runtime": "^3.1013.0",
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "zod": "^3.25.76"
+  }
+}
+
