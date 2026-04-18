@@ -1,0 +1,54 @@
+aws_region           = "us-gov-west-1"
+environment          = "production"
+name_prefix          = "enterprise"
+cluster_arn          = "arn:aws-us-gov:ecs:us-gov-west-1:123456789012:cluster/enterprise-shared"
+vpc_id               = "vpc-0123456789abcdef0"
+private_subnet_ids   = ["subnet-aaa", "subnet-bbb"]
+alb_subnet_ids       = ["subnet-public-a", "subnet-public-b"]
+acm_certificate_arn  = "arn:aws-us-gov:acm:us-gov-west-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
+alb_internal         = false
+alb_ingress_cidr_blocks = ["0.0.0.0/0"]
+jira_listener_rule_priority = 100
+confluence_listener_rule_priority = 110
+
+jira_image      = "123456789012.dkr.ecr.us-gov-west-1.amazonaws.com/jira-mcp:latest"
+confluence_image = "123456789012.dkr.ecr.us-gov-west-1.amazonaws.com/confluence-mcp:latest"
+
+jira_base_url               = "https://jira.hermeus.com"
+jira_host_headers           = ["jira-mcp.hermeus.com"]
+confluence_api_base_url     = "https://confluence.hermeus.com"
+confluence_host_headers     = ["confluence-mcp.hermeus.com"]
+confluence_retrieval_base_url = "http://confluence-retrieval.internal:8180"
+
+jira_bedrock_agent_id         = ""
+jira_bedrock_agent_alias_id   = ""
+confluence_bedrock_agent_id   = ""
+confluence_bedrock_agent_alias_id = ""
+
+common_tags = {
+  Owner      = "platform-engineering"
+  CostCenter = "enterprise-ai"
+}
+
+# Optional secret environment values if you want fallback non-delegated auth.
+# jira_secret_environment = [
+#   {
+#     name       = "JIRA_BASIC_EMAIL"
+#     value_from = "arn:aws-us-gov:secretsmanager:us-gov-west-1:123456789012:secret:jira-basic-email"
+#   },
+#   {
+#     name       = "JIRA_BASIC_TOKEN"
+#     value_from = "arn:aws-us-gov:secretsmanager:us-gov-west-1:123456789012:secret:jira-basic-token"
+#   }
+# ]
+
+# confluence_secret_environment = [
+#   {
+#     name       = "CONFLUENCE_BASIC_EMAIL"
+#     value_from = "arn:aws-us-gov:secretsmanager:us-gov-west-1:123456789012:secret:confluence-basic-email"
+#   },
+#   {
+#     name       = "CONFLUENCE_BASIC_TOKEN"
+#     value_from = "arn:aws-us-gov:secretsmanager:us-gov-west-1:123456789012:secret:confluence-basic-token"
+#   }
+# ]
