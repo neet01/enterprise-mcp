@@ -12,31 +12,53 @@ export class JiraClient {
     projectKey,
     openOnly = true,
   }) {
-    const clauses = [resolveAssigneeClause(this.config.assigneeMode, userContext)];
-
-    if (projectKey) {
-      clauses.push(`project = "${escapeJql(projectKey)}"`);
-    }
-
-    if (openOnly) {
-      clauses.push('statusCategory != Done');
-    }
-
-    return this.searchIssues({
-      jql: clauses.join(' AND '),
+    const fields = [
+      'summary',
+      'status',
+      'priority',
+      'assignee',
+      'reporter',
+      'issuetype',
+      'updated',
+      'created',
+    ];
+    const primaryAssigneeClause = resolveAssigneeClause(this.config.assigneeMode, userContext);
+    const primaryJql = buildTicketJql(primaryAssigneeClause, projectKey, openOnly);
+    const primaryResult = await this.searchIssues({
+      jql: primaryJql,
       authorization,
       limit,
-      fields: [
-        'summary',
-        'status',
-        'priority',
-        'assignee',
-        'reporter',
-        'issuetype',
-        'updated',
-        'created',
-      ],
+      fields,
     });
+
+    const fallbackAssigneeClause = resolveFallbackAssigneeClause(
+      this.config.assigneeMode,
+      authorization,
+      primaryAssigneeClause,
+    );
+
+    if (!fallbackAssigneeClause || primaryResult.total > 0) {
+      return {
+        ...primaryResult,
+        jql: primaryJql,
+        fallbackApplied: false,
+      };
+    }
+
+    const fallbackJql = buildTicketJql(fallbackAssigneeClause, projectKey, openOnly);
+    const fallbackResult = await this.searchIssues({
+      jql: fallbackJql,
+      authorization,
+      limit,
+      fields,
+    });
+
+    return {
+      ...fallbackResult,
+      jql: fallbackJql,
+      fallbackApplied: true,
+      attemptedJql: [primaryJql, fallbackJql],
+    };
   }
 
   async searchIssues({ jql, authorization, limit = 20, fields }) {
@@ -97,6 +119,20 @@ export class JiraClient {
   }
 }
 
+function buildTicketJql(assigneeClause, projectKey, openOnly) {
+  const clauses = [assigneeClause];
+
+  if (projectKey) {
+    clauses.push(`project = "${escapeJql(projectKey)}"`);
+  }
+
+  if (openOnly) {
+    clauses.push('statusCategory != Done');
+  }
+
+  return clauses.join(' AND ');
+}
+
 function resolveAssigneeClause(mode, userContext) {
   if (mode === 'currentUser') {
     return 'assignee = currentUser()';
@@ -119,6 +155,15 @@ function resolveAssigneeClause(mode, userContext) {
   }
 
   throw new Error(`Unsupported JIRA_ASSIGNEE_MODE: ${mode}`);
+}
+
+function resolveFallbackAssigneeClause(mode, authorization, primaryAssigneeClause) {
+  if (!authorization || mode === 'currentUser') {
+    return null;
+  }
+
+  const fallbackClause = 'assignee = currentUser()';
+  return primaryAssigneeClause === fallbackClause ? null : fallbackClause;
 }
 
 function normalizeIssue(issue) {
