@@ -13,6 +13,7 @@ The servers are intentionally separate from LibreChat so they can be deployed an
 
 - Simple deterministic operations go straight to system APIs or retrieval backends.
 - Multi-step or analytical operations go to Amazon Bedrock agents.
+- Confluence retrieval can come from either a custom retrieval API or an Amazon Bedrock Knowledge Base.
 - Both servers expose a `streamable-http` MCP endpoint for LibreChat.
 - For delegated Jira/Confluence access, LibreChat's MCP OAuth flow owns the user OAuth dance and forwards the resulting bearer token to these services on each MCP request.
 
@@ -33,6 +34,13 @@ npm run dev:confluence
 ```
 
 Health checks are exposed at `GET /health`.
+
+For Confluence retrieval, configure one of:
+
+- `CONFLUENCE_RETRIEVAL_BASE_URL` for an existing HTTP retrieval API with `POST /search`
+- `CONFLUENCE_KNOWLEDGE_BASE_ID` to query an Amazon Bedrock Knowledge Base directly
+
+If both are set, the Bedrock Knowledge Base path is preferred.
 
 ## Docker
 

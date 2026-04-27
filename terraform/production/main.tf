@@ -48,6 +48,8 @@ module "confluence_mcp" {
     AWS_REGION                       = var.aws_region
     CONFLUENCE_API_BASE_URL          = var.confluence_api_base_url
     CONFLUENCE_RETRIEVAL_BASE_URL    = var.confluence_retrieval_base_url
+    CONFLUENCE_KNOWLEDGE_BASE_ID     = var.confluence_knowledge_base_id
+    CONFLUENCE_KNOWLEDGE_BASE_SEARCH_TYPE = var.confluence_knowledge_base_search_type
     CONFLUENCE_AUTH_MODE             = "basic"
     CONFLUENCE_REQUIRE_DELEGATED_AUTH = "true"
     CONFLUENCE_TIMEOUT_MS            = "15000"

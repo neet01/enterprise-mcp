@@ -5,11 +5,16 @@ import { resolveUserContext, buildSessionId } from '../shared/identity.js';
 import { toolResponse } from '../shared/toolResponse.js';
 import { ConfluenceClient } from './confluenceClient.js';
 import { ConfluenceRetrievalClient } from './retrievalClient.js';
+import { BedrockKnowledgeBaseRetrievalClient } from './bedrockKnowledgeBaseClient.js';
 
 export function createConfluenceServices(config, overrides = {}) {
   return {
     confluenceClient: overrides.confluenceClient ?? new ConfluenceClient(config),
-    retrievalClient: overrides.retrievalClient ?? new ConfluenceRetrievalClient(config),
+    retrievalClient:
+      overrides.retrievalClient ??
+      (config.knowledgeBaseId
+        ? new BedrockKnowledgeBaseRetrievalClient(config)
+        : new ConfluenceRetrievalClient(config)),
     agentClient:
       overrides.agentClient ??
       new BedrockAgentClient({

@@ -131,8 +131,21 @@ variable "confluence_host_headers" {
 }
 
 variable "confluence_retrieval_base_url" {
-  description = "Base URL for the Confluence retrieval service or RAG sidecar."
+  description = "Optional base URL for a Confluence retrieval service or RAG sidecar."
   type        = string
+  default     = ""
+}
+
+variable "confluence_knowledge_base_id" {
+  description = "Optional Bedrock Knowledge Base ID for direct Confluence retrieval."
+  type        = string
+  default     = ""
+}
+
+variable "confluence_knowledge_base_search_type" {
+  description = "Optional Bedrock Knowledge Base search type override, HYBRID or SEMANTIC."
+  type        = string
+  default     = ""
 }
 
 variable "confluence_bedrock_agent_id" {

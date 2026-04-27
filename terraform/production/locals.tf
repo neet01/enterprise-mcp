@@ -14,7 +14,7 @@ locals {
   bedrock_policies = [
     {
       sid       = "InvokeBedrockAgents"
-      actions   = ["bedrock:InvokeAgent"]
+      actions   = ["bedrock:InvokeAgent", "bedrock:Retrieve"]
       resources = ["*"]
     }
   ]

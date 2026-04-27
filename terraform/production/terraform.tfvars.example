@@ -18,7 +18,9 @@ jira_base_url               = "https://jira.hermeus.com"
 jira_host_headers           = ["jira-mcp.hermeus.com"]
 confluence_api_base_url     = "https://confluence.hermeus.com"
 confluence_host_headers     = ["confluence-mcp.hermeus.com"]
-confluence_retrieval_base_url = "http://confluence-retrieval.internal:8180"
+confluence_retrieval_base_url = ""
+confluence_knowledge_base_id = ""
+confluence_knowledge_base_search_type = ""
 
 jira_bedrock_agent_id         = ""
 jira_bedrock_agent_alias_id   = ""
