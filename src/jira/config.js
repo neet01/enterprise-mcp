@@ -11,6 +11,10 @@ export function getJiraConfig() {
     requireDelegatedAuth: parseBoolean(process.env.JIRA_REQUIRE_DELEGATED_AUTH, true),
     timeoutMs: Number(process.env.JIRA_TIMEOUT_MS ?? 15000),
     assigneeMode: process.env.JIRA_ASSIGNEE_MODE ?? 'email',
+    debugLogging: parseBoolean(
+      process.env.JIRA_DEBUG_LOGGING ?? process.env.MCP_DEBUG_LOGGING,
+      true,
+    ),
     awsRegion: process.env.AWS_REGION ?? '',
     bedrockAgentId: process.env.JIRA_BEDROCK_AGENT_ID ?? '',
     bedrockAgentAliasId: process.env.JIRA_BEDROCK_AGENT_ALIAS_ID ?? '',

@@ -13,7 +13,7 @@ const app = createMcpHttpServer({
   host: config.host,
   port: config.port,
   path: config.path,
+  debugLogging: config.debugLogging,
 });
 
 await app.listen();
-

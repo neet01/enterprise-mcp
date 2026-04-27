@@ -26,6 +26,16 @@ export function getRequestContext() {
   return storage.getStore() ?? {};
 }
 
+export function summarizeRequestContext(context = {}) {
+  return {
+    requestId: context.requestId ?? null,
+    userId: context.userId ?? null,
+    userEmail: context.userEmail ?? null,
+    entraObjectId: context.entraObjectId ?? null,
+    hasAuthorization: typeof context.authorization === 'string',
+  };
+}
+
 function headerValue(value) {
   return Array.isArray(value) ? value[0] : value;
 }

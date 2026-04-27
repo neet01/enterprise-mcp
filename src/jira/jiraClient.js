@@ -1,4 +1,5 @@
 import { requestJson } from '../shared/http.js';
+import { logDebug, logError } from '../shared/logger.js';
 
 export class JiraClient {
   constructor(config) {
@@ -24,6 +25,16 @@ export class JiraClient {
     ];
     const primaryAssigneeClause = resolveAssigneeClause(this.config.assigneeMode, userContext);
     const primaryJql = buildTicketJql(primaryAssigneeClause, projectKey, openOnly);
+    logDebug('jira_list_tickets_query_prepared', {
+      assigneeMode: this.config.assigneeMode,
+      hasDelegatedAuthorization: typeof authorization === 'string',
+      projectKey: projectKey ?? null,
+      openOnly,
+      limit,
+      userEmail: userContext.userEmail ?? null,
+      jiraAccountId: userContext.jiraAccountId ?? null,
+      jql: primaryJql,
+    });
     const primaryResult = await this.searchIssues({
       jql: primaryJql,
       authorization,
@@ -38,6 +49,11 @@ export class JiraClient {
     );
 
     if (!fallbackAssigneeClause || primaryResult.total > 0) {
+      logDebug('jira_list_tickets_query_completed', {
+        jql: primaryJql,
+        fallbackApplied: false,
+        total: primaryResult.total,
+      });
       return {
         ...primaryResult,
         jql: primaryJql,
@@ -46,11 +62,22 @@ export class JiraClient {
     }
 
     const fallbackJql = buildTicketJql(fallbackAssigneeClause, projectKey, openOnly);
+    logDebug('jira_list_tickets_fallback_prepared', {
+      primaryJql,
+      fallbackJql,
+      primaryTotal: primaryResult.total,
+    });
     const fallbackResult = await this.searchIssues({
       jql: fallbackJql,
       authorization,
       limit,
       fields,
+    });
+
+    logDebug('jira_list_tickets_query_completed', {
+      jql: fallbackJql,
+      fallbackApplied: true,
+      total: fallbackResult.total,
     });
 
     return {
@@ -62,34 +89,70 @@ export class JiraClient {
   }
 
   async searchIssues({ jql, authorization, limit = 20, fields }) {
-    const response = await requestJson(`${this.config.baseUrl}/rest/api/3/search`, {
-      method: 'POST',
-      headers: this.authHeaders(authorization),
-      timeoutMs: this.config.timeoutMs,
-      body: {
-        jql,
-        maxResults: limit,
-        fields,
-      },
-    });
+    try {
+      const response = await requestJson(`${this.config.baseUrl}/rest/api/3/search`, {
+        method: 'POST',
+        headers: this.authHeaders(authorization),
+        timeoutMs: this.config.timeoutMs,
+        debug: this.config.debugLogging,
+        logLabel: 'jira_search_request',
+        logMeta: {
+          authMode: this.resolveAuthMode(authorization),
+          jql,
+          fields,
+          limit,
+        },
+        body: {
+          jql,
+          maxResults: limit,
+          fields,
+        },
+      });
 
-    return {
-      total: response.total ?? 0,
-      issues: (response.issues ?? []).map(normalizeIssue),
-    };
+      return {
+        total: response.total ?? 0,
+        issues: (response.issues ?? []).map(normalizeIssue),
+      };
+    } catch (error) {
+      logError('jira_search_failed', error, {
+        authMode: this.resolveAuthMode(authorization),
+        jql,
+        limit,
+        fields,
+        status: error?.status ?? null,
+        response: error?.response ?? null,
+      });
+      throw error;
+    }
   }
 
   async getIssue(issueKey, authorization) {
-    const response = await requestJson(
-      `${this.config.baseUrl}/rest/api/3/issue/${encodeURIComponent(issueKey)}`,
-      {
-        method: 'GET',
-        headers: this.authHeaders(authorization),
-        timeoutMs: this.config.timeoutMs,
-      },
-    );
+    try {
+      const response = await requestJson(
+        `${this.config.baseUrl}/rest/api/3/issue/${encodeURIComponent(issueKey)}`,
+        {
+          method: 'GET',
+          headers: this.authHeaders(authorization),
+          timeoutMs: this.config.timeoutMs,
+          debug: this.config.debugLogging,
+          logLabel: 'jira_get_issue_request',
+          logMeta: {
+            authMode: this.resolveAuthMode(authorization),
+            issueKey,
+          },
+        },
+      );
 
-    return normalizeIssue(response);
+      return normalizeIssue(response);
+    } catch (error) {
+      logError('jira_get_issue_failed', error, {
+        authMode: this.resolveAuthMode(authorization),
+        issueKey,
+        status: error?.status ?? null,
+        response: error?.response ?? null,
+      });
+      throw error;
+    }
   }
 
   authHeaders(delegatedAuthorization) {
@@ -116,6 +179,18 @@ export class JiraClient {
       authorization: `Basic ${basicValue}`,
       accept: 'application/json',
     };
+  }
+
+  resolveAuthMode(delegatedAuthorization) {
+    if (delegatedAuthorization) {
+      return 'delegated-bearer';
+    }
+
+    if (this.config.authMode === 'bearer') {
+      return 'configured-bearer';
+    }
+
+    return 'configured-basic';
   }
 }
 

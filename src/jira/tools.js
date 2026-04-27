@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { BedrockAgentClient } from '../shared/bedrockAgentClient.js';
 import { requireDelegatedAuthHeader, getDelegatedAuthHeader } from '../shared/delegatedAuth.js';
 import { resolveUserContext, buildSessionId } from '../shared/identity.js';
+import { logDebug, logError } from '../shared/logger.js';
 import { toolResponse } from '../shared/toolResponse.js';
 import { JiraClient } from './jiraClient.js';
 
@@ -33,12 +34,20 @@ export function registerJiraTools(server, config, services = createJiraServices(
     async (args) => {
       const userContext = resolveUserContext(args);
       const authorization = resolveAuthorization(config);
+      logToolInvocation('jira_list_my_tickets', args, userContext, authorization);
       const result = await services.jiraClient.listTicketsForUser({
         userContext,
         authorization,
         projectKey: args.projectKey,
         openOnly: args.openOnly,
         limit: args.limit,
+      });
+      logDebug('jira_tool_completed', {
+        tool: 'jira_list_my_tickets',
+        total: result.total,
+        fallbackApplied: result.fallbackApplied ?? false,
+        jql: result.jql ?? null,
+        attemptedJql: result.attemptedJql ?? null,
       });
 
       return toolResponse({
@@ -58,7 +67,13 @@ export function registerJiraTools(server, config, services = createJiraServices(
     },
     async ({ issueKey }) => {
       const authorization = resolveAuthorization(config);
+      logToolInvocation('jira_get_issue', { issueKey }, null, authorization);
       const issue = await services.jiraClient.getIssue(issueKey, authorization);
+      logDebug('jira_tool_completed', {
+        tool: 'jira_get_issue',
+        issueKey,
+        found: Boolean(issue?.key),
+      });
 
       return toolResponse({
         route: 'direct-api',
@@ -77,7 +92,13 @@ export function registerJiraTools(server, config, services = createJiraServices(
     },
     async ({ jql, limit }) => {
       const authorization = resolveAuthorization(config);
+      logToolInvocation('jira_search_issues', { jql, limit }, null, authorization);
       const result = await services.jiraClient.searchIssues({ jql, authorization, limit });
+      logDebug('jira_tool_completed', {
+        tool: 'jira_search_issues',
+        jql,
+        total: result.total,
+      });
 
       return toolResponse({
         route: 'direct-api',
@@ -105,6 +126,7 @@ export function registerJiraTools(server, config, services = createJiraServices(
     async (args) => {
       const userContext = resolveUserContext(args);
       const authorization = resolveAuthorization(config);
+      logToolInvocation('jira_prioritize_user_tickets', args, userContext, authorization);
       const result = await services.jiraClient.listTicketsForUser({
         userContext,
         authorization,
@@ -136,6 +158,26 @@ export function registerJiraTools(server, config, services = createJiraServices(
       });
     },
   );
+}
+
+function logToolInvocation(tool, args, userContext, authorization) {
+  try {
+    logDebug('jira_tool_invoked', {
+      tool,
+      hasDelegatedAuthorization: typeof authorization === 'string',
+      args,
+      userContext: userContext
+        ? {
+            userId: userContext.userId ?? null,
+            userEmail: userContext.userEmail ?? null,
+            entraObjectId: userContext.entraObjectId ?? null,
+            jiraAccountId: userContext.jiraAccountId ?? null,
+          }
+        : null,
+    });
+  } catch (error) {
+    logError('jira_tool_invocation_logging_failed', error, { tool });
+  }
 }
 
 function resolveAuthorization(config) {

@@ -1,8 +1,12 @@
 import http from 'node:http';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { buildRequestContext, withRequestContext } from './requestContext.js';
-import { logError, logInfo } from './logger.js';
+import {
+  buildRequestContext,
+  summarizeRequestContext,
+  withRequestContext,
+} from './requestContext.js';
+import { logDebug, logError, logInfo } from './logger.js';
 
 export function createMcpHttpServer({
   serverName,
@@ -12,6 +16,7 @@ export function createMcpHttpServer({
   port,
   host = '0.0.0.0',
   path = '/mcp',
+  debugLogging = false,
 }) {
   const httpServer = http.createServer(async (req, res) => {
     const url = new URL(req.url ?? '/', `http://${req.headers.host ?? '127.0.0.1'}`);
@@ -43,6 +48,26 @@ export function createMcpHttpServer({
       await server.connect(transport);
 
       const requestContext = buildRequestContext(req);
+      if (debugLogging) {
+        logDebug('mcp_request_started', {
+          serverName,
+          method: req.method,
+          path: url.pathname,
+          ...summarizeRequestContext(requestContext),
+        });
+      }
+
+      res.on('finish', () => {
+        if (debugLogging) {
+          logDebug('mcp_request_completed', {
+            serverName,
+            method: req.method,
+            path: url.pathname,
+            statusCode: res.statusCode,
+            ...summarizeRequestContext(requestContext),
+          });
+        }
+      });
 
       await withRequestContext(requestContext, async () => {
         await transport.handleRequest(req, res);
