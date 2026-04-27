@@ -90,8 +90,17 @@ export class JiraClient {
 
   async searchIssues({ jql, authorization, limit = 20, fields }) {
     try {
-      const response = await requestJson(`${this.config.baseUrl}/rest/api/3/search`, {
-        method: 'POST',
+      const query = new URLSearchParams({
+        jql,
+        maxResults: String(limit),
+      });
+
+      if (fields?.length) {
+        query.set('fields', fields.join(','));
+      }
+
+      const response = await requestJson(`${this.config.baseUrl}/rest/api/3/search?${query}`, {
+        method: 'GET',
         headers: this.authHeaders(authorization),
         timeoutMs: this.config.timeoutMs,
         debug: this.config.debugLogging,
@@ -101,11 +110,6 @@ export class JiraClient {
           jql,
           fields,
           limit,
-        },
-        body: {
-          jql,
-          maxResults: limit,
-          fields,
         },
       });
 
