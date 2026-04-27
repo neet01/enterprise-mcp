@@ -15,13 +15,13 @@ It creates:
 
 ## Important Runtime Note
 
-The current container `Dockerfile` in this repo starts the service with:
+The container image in this repo starts the service with the runtime environment:
 
 ```sh
-node --env-file=.env src/${MCP_SERVICE}/server.js
+node src/${MCP_SERVICE}/server.js
 ```
 
-That works locally because a `.env` file exists. In ECS, the service should rely on task-definition environment variables and secrets instead of a local `.env` file.
+In ECS, the task should rely on task-definition environment variables and secrets instead of a local `.env` file.
 
 This module handles that by defaulting the container command to:
 
@@ -29,7 +29,7 @@ This module handles that by defaulting the container command to:
 node src/<service_kind>/server.js
 ```
 
-So the ECS deployment does not depend on a mounted `.env` file.
+So the ECS deployment does not depend on a mounted `.env` file, and it does not rely on the image build-time default service kind.
 
 ## ACM And HTTPS
 

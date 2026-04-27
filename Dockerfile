@@ -13,5 +13,4 @@ ENV MCP_HOST=0.0.0.0
 
 EXPOSE 8090
 
-CMD ["sh", "-lc", "node --env-file=.env src/${MCP_SERVICE}/server.js"]
-
+CMD ["sh", "-lc", "node src/${MCP_SERVICE}/server.js"]
