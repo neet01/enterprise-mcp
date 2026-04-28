@@ -306,6 +306,74 @@ export class JiraClient {
     }
   }
 
+  async updateComment(issueKey, commentId, body, authorization) {
+    try {
+      const response = await requestJson(
+        `${this.apiBaseUrl()}/issue/${encodeURIComponent(issueKey)}/comment/${encodeURIComponent(commentId)}`,
+        {
+          method: 'PUT',
+          headers: this.authHeaders(authorization),
+          timeoutMs: this.config.timeoutMs,
+          debug: this.config.debugLogging,
+          logLabel: 'jira_update_comment_request',
+          logMeta: {
+            authMode: this.resolveAuthMode(authorization),
+            issueKey,
+            commentId,
+          },
+          body: { body },
+        },
+      );
+
+      assertJsonObject(response, 'jira_update_comment');
+      return normalizeComment(response);
+    } catch (error) {
+      logError('jira_update_comment_failed', error, {
+        authMode: this.resolveAuthMode(authorization),
+        issueKey,
+        commentId,
+        status: error?.status ?? null,
+        response: error?.response ?? null,
+      });
+      throw error;
+    }
+  }
+
+  async deleteComment(issueKey, commentId, authorization) {
+    try {
+      await requestJson(
+        `${this.apiBaseUrl()}/issue/${encodeURIComponent(issueKey)}/comment/${encodeURIComponent(commentId)}`,
+        {
+          method: 'DELETE',
+          headers: this.authHeaders(authorization),
+          timeoutMs: this.config.timeoutMs,
+          debug: this.config.debugLogging,
+          logLabel: 'jira_delete_comment_request',
+          logMeta: {
+            authMode: this.resolveAuthMode(authorization),
+            issueKey,
+            commentId,
+          },
+        },
+      );
+
+      return {
+        issueKey,
+        commentId,
+        success: true,
+      };
+    } catch (error) {
+      logError('jira_delete_comment_failed', error, {
+        authMode: this.resolveAuthMode(authorization),
+        issueKey,
+        commentId,
+        status: error?.status ?? null,
+        response: error?.response ?? null,
+      });
+      throw error;
+    }
+  }
+
   async getTransitions(issueKey, authorization) {
     try {
       const response = await requestJson(

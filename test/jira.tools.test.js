@@ -139,6 +139,62 @@ test('jira_add_comment uses the direct Jira client', async () => {
   assert.equal(result.structuredContent.comment.authorization, 'Bearer delegated-token');
 });
 
+test('jira_update_comment uses the direct Jira client', async () => {
+  const fakeServer = new FakeServer();
+  const jiraClient = {
+    async updateComment(issueKey, commentId, body, authorization) {
+      return {
+        id: commentId,
+        body,
+        issueKey,
+        authorization,
+      };
+    },
+  };
+
+  registerJiraTools(fakeServer, baseConfig, {
+    jiraClient,
+    agentClient: {},
+  });
+
+  const handler = fakeServer.tools.get('jira_update_comment');
+  const result = await withRequestContext(
+    { authorization: 'Bearer delegated-token' },
+    () => handler({ issueKey: 'ENG-1', commentId: '10001', body: 'Updated comment.' }),
+  );
+
+  assert.equal(result.structuredContent.route, 'direct-api');
+  assert.equal(result.structuredContent.comment.id, '10001');
+  assert.equal(result.structuredContent.comment.authorization, 'Bearer delegated-token');
+});
+
+test('jira_delete_comment uses the direct Jira client', async () => {
+  const fakeServer = new FakeServer();
+  const jiraClient = {
+    async deleteComment(issueKey, commentId) {
+      return {
+        issueKey,
+        commentId,
+        success: true,
+      };
+    },
+  };
+
+  registerJiraTools(fakeServer, baseConfig, {
+    jiraClient,
+    agentClient: {},
+  });
+
+  const handler = fakeServer.tools.get('jira_delete_comment');
+  const result = await withRequestContext(
+    { authorization: 'Bearer delegated-token' },
+    () => handler({ issueKey: 'ENG-1', commentId: '10001' }),
+  );
+
+  assert.equal(result.structuredContent.success, true);
+  assert.equal(result.structuredContent.commentId, '10001');
+});
+
 test('jira_get_transitions uses the direct Jira client', async () => {
   const fakeServer = new FakeServer();
   const jiraClient = {

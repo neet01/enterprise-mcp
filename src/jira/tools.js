@@ -205,6 +205,63 @@ export function registerJiraTools(server, config, services = createJiraServices(
   );
 
   server.tool(
+    'jira_update_comment',
+    'Replace the body of an existing Jira comment.',
+    {
+      issueKey: z.string().min(2),
+      commentId: z.string().min(1),
+      body: z.string().min(1).max(5000),
+    },
+    async ({ issueKey, commentId, body }) => {
+      const authorization = resolveAuthorization(config);
+      logToolInvocation(
+        'jira_update_comment',
+        { issueKey, commentId, bodyLength: body.length },
+        null,
+        authorization,
+      );
+      const comment = await services.jiraClient.updateComment(issueKey, commentId, body, authorization);
+      logDebug('jira_tool_completed', {
+        tool: 'jira_update_comment',
+        issueKey,
+        commentId,
+      });
+
+      return toolResponse({
+        route: 'direct-api',
+        authMode: authorization ? 'delegated-bearer' : 'configured-server-auth',
+        issueKey,
+        comment,
+      });
+    },
+  );
+
+  server.tool(
+    'jira_delete_comment',
+    'Delete a Jira comment from an issue.',
+    {
+      issueKey: z.string().min(2),
+      commentId: z.string().min(1),
+    },
+    async ({ issueKey, commentId }) => {
+      const authorization = resolveAuthorization(config);
+      logToolInvocation('jira_delete_comment', { issueKey, commentId }, null, authorization);
+      const result = await services.jiraClient.deleteComment(issueKey, commentId, authorization);
+      logDebug('jira_tool_completed', {
+        tool: 'jira_delete_comment',
+        issueKey,
+        commentId,
+      });
+
+      return toolResponse({
+        route: 'direct-api',
+        authMode: authorization ? 'delegated-bearer' : 'configured-server-auth',
+        ...result,
+      });
+    },
+  );
+
+  server.tool(
     'jira_assign_issue',
     'Assign a Jira issue to a user.',
     {
