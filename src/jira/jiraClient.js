@@ -177,7 +177,20 @@ export class JiraClient {
 
   async getIssue(issueKey, authorization) {
     try {
-      const response = await this.fetchIssue(issueKey, authorization);
+      const response = await this.fetchIssue(issueKey, authorization, {
+        fields: [
+          'summary',
+          'description',
+          'status',
+          'priority',
+          'assignee',
+          'reporter',
+          'issuetype',
+          'updated',
+          'created',
+          'duedate',
+        ],
+      });
 
       return normalizeIssue(response);
     } catch (error) {
@@ -598,6 +611,7 @@ function normalizeIssue(issue) {
     issueType: issue.fields?.issuetype?.name ?? null,
     assignee: issue.fields?.assignee?.displayName ?? null,
     reporter: issue.fields?.reporter?.displayName ?? null,
+    description: issue.fields?.description ?? null,
     created: issue.fields?.created ?? null,
     updated: issue.fields?.updated ?? null,
     dueDate: issue.fields?.duedate ?? null,

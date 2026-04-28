@@ -3,7 +3,7 @@ export function getConfluenceConfig() {
     host: process.env.MCP_HOST ?? '0.0.0.0',
     port: Number(process.env.MCP_PORT ?? 8090),
     path: process.env.MCP_PATH ?? '/mcp',
-    apiBaseUrl: requiredEnv('CONFLUENCE_API_BASE_URL'),
+    apiBaseUrl: process.env.CONFLUENCE_API_BASE_URL ?? 'https://confluence.hermeus.com/rest/api',
     retrievalBaseUrl: optionalEnv('CONFLUENCE_RETRIEVAL_BASE_URL'),
     knowledgeBaseId: optionalEnv('CONFLUENCE_KNOWLEDGE_BASE_ID'),
     knowledgeBaseSearchType: parseSearchType(
@@ -19,16 +19,6 @@ export function getConfluenceConfig() {
     bedrockAgentId: process.env.CONFLUENCE_BEDROCK_AGENT_ID ?? '',
     bedrockAgentAliasId: process.env.CONFLUENCE_BEDROCK_AGENT_ALIAS_ID ?? '',
   };
-}
-
-function requiredEnv(name) {
-  const value = process.env[name];
-
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${name}`);
-  }
-
-  return value;
 }
 
 function optionalEnv(name) {

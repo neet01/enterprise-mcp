@@ -6,24 +6,13 @@ export class ConfluenceClient {
   }
 
   async getPage(pageId, authorization) {
-    const response = await requestJson(
-      `${this.config.apiBaseUrl}/api/v2/pages/${encodeURIComponent(pageId)}`,
-      {
-        method: 'GET',
-        headers: this.authHeaders(authorization),
-        timeoutMs: this.config.timeoutMs,
-      },
-    );
+    const response = await requestJson(this.pageUrl(pageId), {
+      method: 'GET',
+      headers: this.authHeaders(authorization),
+      timeoutMs: this.config.timeoutMs,
+    });
 
-    return {
-      id: response.id,
-      title: response.title,
-      spaceId: response.spaceId ?? null,
-      status: response.status ?? null,
-      createdAt: response.createdAt ?? null,
-      version: response.version?.number ?? null,
-      links: response._links ?? null,
-    };
+    return this.normalizePage(response);
   }
 
   authHeaders(delegatedAuthorization) {
@@ -49,6 +38,26 @@ export class ConfluenceClient {
     return {
       authorization: `Basic ${basicValue}`,
       accept: 'application/json',
+    };
+  }
+
+  pageUrl(pageId) {
+    if (this.config.apiBaseUrl.includes('/rest/api')) {
+      return `${this.config.apiBaseUrl}/content/${encodeURIComponent(pageId)}?expand=version,space`;
+    }
+
+    return `${this.config.apiBaseUrl}/api/v2/pages/${encodeURIComponent(pageId)}`;
+  }
+
+  normalizePage(response) {
+    return {
+      id: response.id,
+      title: response.title,
+      spaceId: response.spaceId ?? response.space?.id ?? response.space?.key ?? null,
+      status: response.status ?? response.currentStatus ?? null,
+      createdAt: response.createdAt ?? response.version?.when ?? null,
+      version: response.version?.number ?? null,
+      links: response._links ?? null,
     };
   }
 }
