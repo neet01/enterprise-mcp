@@ -99,7 +99,7 @@ export class JiraClient {
         query.set('fields', fields.join(','));
       }
 
-      const response = await requestJson(`${this.config.baseUrl}/rest/api/3/search?${query}`, {
+      const response = await requestJson(`${this.apiBaseUrl()}/search?${query}`, {
         method: 'GET',
         headers: this.authHeaders(authorization),
         timeoutMs: this.config.timeoutMs,
@@ -133,7 +133,7 @@ export class JiraClient {
   async getIssue(issueKey, authorization) {
     try {
       const response = await requestJson(
-        `${this.config.baseUrl}/rest/api/3/issue/${encodeURIComponent(issueKey)}`,
+        `${this.apiBaseUrl()}/issue/${encodeURIComponent(issueKey)}`,
         {
           method: 'GET',
           headers: this.authHeaders(authorization),
@@ -195,6 +195,10 @@ export class JiraClient {
     }
 
     return 'configured-basic';
+  }
+
+  apiBaseUrl() {
+    return `${this.config.baseUrl}/rest/api/${this.config.apiVersion ?? '2'}`;
   }
 }
 

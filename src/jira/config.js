@@ -11,6 +11,7 @@ export function getJiraConfig() {
     requireDelegatedAuth: parseBoolean(process.env.JIRA_REQUIRE_DELEGATED_AUTH, true),
     timeoutMs: Number(process.env.JIRA_TIMEOUT_MS ?? 15000),
     assigneeMode: process.env.JIRA_ASSIGNEE_MODE ?? 'email',
+    apiVersion: process.env.JIRA_API_VERSION ?? '2',
     debugLogging: parseBoolean(
       process.env.JIRA_DEBUG_LOGGING ?? process.env.MCP_DEBUG_LOGGING,
       true,
